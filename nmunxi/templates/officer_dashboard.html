@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}Officer Dashboard{% endblock %}
+
+{% block content %}
+<h1><i class="fas fa-user-tie"></i> Officer Dashboard</h1>
+<p>Welcome, Officer {{ current_user.username }}</p>
+
+<h2>Complaints Assigned to You</h2>
+
+{% if assigned_complaints %}
+    {% for complaint in assigned_complaints %}
+    <div class="complaint-item">
+        <div style="display: flex; justify-content: space-between;">
+            <div>
+                <h3>{{ complaint.title }}</h3>
+                <p style="color: var(--gray-color);">
+                    <i class="fas fa-user"></i> {{ complaint.author.username }} |
+                    <i class="fas fa-map-marker-alt"></i> {{ complaint.address or 'N/A' }}
+                </p>
+            </div>
+            <span class="status status-{{ complaint.status }}">
+                {{ complaint.status|replace('_', ' ')|title }}
+            </span>
+        </div>
+        
+        <p>{{ complaint.description }}</p>
+        
+        {% if complaint.image_path %}
+        <div style="margin: 10px 0;">
+            <img src="{{ url_for('uploaded_file', filename=complaint.image_path) }}" 
+                 alt="Complaint Image" style="max-width: 300px; border-radius: 5px;">
+        </div>
+        {% endif %}
+        
+        {% if complaint.status != 'resolved' %}
+        <form method="POST" action="{{ url_for('resolve_complaint', complaint_id=complaint.id) }}" 
+              enctype="multipart/form-data" style="margin-top: 15px;">
+            <div class="form-group">
+                <label>Resolution Details</label>
+                <textarea name="resolution_details" class="form-control" rows="3" required></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label>Upload Resolution Photo (Optional)</label>
+                <input type="file" name="resolved_image" class="form-control" accept="image/*">
+            </div>
+            
+            <button type="submit" class="btn" style="background: var(--success-color);">
+                <i class="fas fa-check"></i> Mark as Resolved
+            </button>
+        </form>
+        {% else %}
+        <div style="background: #d4edda; padding: 10px; border-radius: 5px; margin-top: 10px;">
+            <h4><i class="fas fa-check-circle"></i> Already Resolved</h4>
+            <p>{{ complaint.resolution_details }}</p>
+        </div>
+        {% endif %}
+    </div>
+    {% endfor %}
+{% else %}
+<div class="card" style="text-align: center; padding: 40px;">
+    <i class="fas fa-inbox fa-3x" style="color: var(--gray-color); margin-bottom: 20px;"></i>
+    <h3>No Assigned Complaints</h3>
+    <p>You don't have any complaints assigned to you.</p>
+</div>
+{% endif %}
+
+{% if taluka_complaints %}
+<h2>Pending Complaints in {{ current_user.taluka }}</h2>
+{% for complaint in taluka_complaints %}
+<div class="complaint-item">
+    <h3>{{ complaint.title }}</h3>
+    <p>{{ complaint.description[:200] }}...</p>
+    <p style="color: var(--gray-color); font-size: 0.9em;">
+        <i class="fas fa-user"></i> {{ complaint.author.username }} |
+        <i class="fas fa-calendar"></i> {{ complaint.created_at.strftime('%d %b %Y') }}
+    </p>
+</div>
+{% endfor %}
+{% endif %}
+{% endblock %}

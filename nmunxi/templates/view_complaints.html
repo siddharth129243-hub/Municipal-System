@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}All Complaints{% endblock %}
+
+{% block content %}
+<h1><i class="fas fa-list"></i> All Complaints</h1>
+<p>Viewing all complaints in the system</p>
+
+{% if complaints %}
+    {% for complaint in complaints %}
+    <div class="complaint-item">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+            <div>
+                <h3>{{ complaint.title }}</h3>
+                <p style="color: var(--gray-color);">
+                    <i class="fas fa-user"></i> {{ complaint.author.username }} |
+                    <i class="fas fa-map-marker-alt"></i> {{ complaint.taluka }} |
+                    <i class="fas fa-calendar"></i> {{ complaint.created_at.strftime('%d %b %Y') }}
+                </p>
+            </div>
+            <span class="status status-{{ complaint.status }}">
+                {{ complaint.status|replace('_', ' ')|title }}
+            </span>
+        </div>
+        
+        <p>{{ complaint.description }}</p>
+        
+        {% if complaint.image_path %}
+        <div style="margin: 10px 0;">
+            <img src="{{ url_for('uploaded_file', filename=complaint.image_path) }}" 
+                 alt="Complaint Image" style="max-width: 300px; border-radius: 5px;">
+        </div>
+        {% endif %}
+        
+        <div style="color: var(--gray-color); font-size: 0.9em;">
+            <i class="fas fa-tag"></i> {{ complaint.category }} |
+            <i class="fas fa-flag"></i> {{ complaint.priority|title }}
+            
+            {% if complaint.assigned_officer %}
+             | <i class="fas fa-user-tie"></i> Assigned to: {{ complaint.assigned_officer.username }}
+            {% endif %}
+        </div>
+        
+        {% if complaint.status == 'resolved' and complaint.resolution_details %}
+        <div style="background: #d4edda; padding: 10px; border-radius: 5px; margin-top: 10px;">
+            <h4><i class="fas fa-check-circle"></i> Resolution</h4>
+            <p>{{ complaint.resolution_details }}</p>
+            {% if complaint.resolved_image_path %}
+            <img src="{{ url_for('uploaded_file', filename=complaint.resolved_image_path) }}" 
+                 alt="Resolution Image" style="max-width: 200px; border-radius: 5px; margin-top: 10px;">
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+    {% endfor %}
+{% else %}
+<div class="card" style="text-align: center; padding: 40px;">
+    <i class="fas fa-inbox fa-3x" style="color: var(--gray-color); margin-bottom: 20px;"></i>
+    <h3>No Complaints Found</h3>
+    <p>There are no complaints in the system.</p>
+</div>
+{% endif %}
+{% endblock %}

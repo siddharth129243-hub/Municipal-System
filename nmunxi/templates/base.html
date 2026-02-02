@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Municipal Compiler{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #1a5f7a;
+            --secondary-color: #57cc99;
+            --accent-color: #ff9a3c;
+            --danger-color: #ff6b6b;
+            --warning-color: #ffd93d;
+            --success-color: #6bcf7f;
+            --light-color: #f8f9fa;
+            --dark-color: #343a40;
+            --gray-color: #6c757d;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f7fa;
+            min-height: 100vh;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #1a5f7a 0%, #2286c3 100%);
+            color: white;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo { display: flex; align-items: center; gap: 15px; }
+        .logo-icon { 
+            width: 50px; height: 50px; 
+            background: white; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            color: var(--primary-color); font-size: 24px;
+        }
+        
+        .nav { display: flex; gap: 20px; }
+        .nav a { color: white; text-decoration: none; padding: 8px 16px; }
+        .nav a:hover { background: rgba(255,255,255,0.2); border-radius: 5px; }
+        
+        .container { max-width: 1200px; margin: 20px auto; padding: 0 20px; }
+        
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        
+        .btn:hover { opacity: 0.9; }
+        
+        .form-group { margin-bottom: 15px; }
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        
+        .alert {
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        
+        .alert-success { background: #d4edda; color: #155724; }
+        .alert-danger { background: #f8d7da; color: #721c24; }
+        .alert-info { background: #d1ecf1; color: #0c5460; }
+        
+        .complaint-item {
+            background: white;
+            border-left: 5px solid var(--primary-color);
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+        }
+        
+        .status { padding: 5px 10px; border-radius: 15px; font-size: 0.9em; }
+        .status-pending { background: #fff3cd; color: #856404; }
+        .status-resolved { background: #d4edda; color: #155724; }
+        .status-in_progress { background: #cce5ff; color: #004085; }
+        
+        .footer {
+            background: var(--dark-color);
+            color: white;
+            text-align: center;
+            padding: 20px;
+            margin-top: 40px;
+        }
+        
+        @media (max-width: 768px) {
+            .header { flex-direction: column; gap: 15px; }
+            .nav { flex-wrap: wrap; justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="logo">
+            <div class="logo-icon">
+                <i class="fas fa-city"></i>
+            </div>
+            <div>
+                <h1>Municipal Compiler</h1>
+                <p>Smart Complaint Management</p>
+            </div>
+        </div>
+        
+        <nav class="nav">
+            {% if current_user.is_authenticated %}
+                <a href="{{ url_for('dashboard') }}"><i class="fas fa-home"></i> Dashboard</a>
+                {% if current_user.role == 'user' %}
+                    <a href="{{ url_for('new_complaint') }}"><i class="fas fa-plus"></i> New Complaint</a>
+                {% endif %}
+                <a href="{{ url_for('view_complaints') }}"><i class="fas fa-list"></i> Complaints</a>
+                <a href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                <span style="padding: 8px 16px;">
+                    <i class="fas fa-user"></i> {{ current_user.username }} ({{ current_user.role }})
+                </span>
+            {% endif %}
+        </nav>
+    </header>
+    
+    <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        {% block content %}{% endblock %}
+    </div>
+    
+    <footer class="footer">
+        <p>&copy; 2024 Municipal Corporation. All rights reserved.</p>
+        <p>Emergency: 100 (Police) | 101 (Fire) | 108 (Ambulance)</p>
+    </footer>
+    
+    <script>
+        // Simple JavaScript for image preview
+        function previewImage(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const preview = document.getElementById('imagePreview');
+                    if (preview) {
+                        preview.src = e.target.result;
+                        preview.style.display = 'block';
+                    }
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+        
+        // Get location
+        function getLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        document.getElementById('latitude').value = position.coords.latitude;
+                        document.getElementById('longitude').value = position.coords.longitude;
+                        alert('Location captured successfully!');
+                    },
+                    function() {
+                        alert('Unable to get location. Please enter manually.');
+                    }
+                );
+            } else {
+                alert('Geolocation not supported.');
+            }
+        }
+    </script>
+</body>
+</html>

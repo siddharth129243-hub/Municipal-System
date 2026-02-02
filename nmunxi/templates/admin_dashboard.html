@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<h1><i class="fas fa-user-shield"></i> Admin Dashboard</h1>
+<p>System Management Console</p>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin: 30px 0;">
+    <div class="card">
+        <h3><i class="fas fa-file-alt"></i> Total Complaints</h3>
+        <p style="font-size: 2em; color: var(--primary-color);">{{ stats.total_complaints }}</p>
+    </div>
+    
+    <div class="card">
+        <h3><i class="fas fa-clock"></i> Pending</h3>
+        <p style="font-size: 2em; color: var(--warning-color);">{{ stats.pending_complaints }}</p>
+    </div>
+    
+    <div class="card">
+        <h3><i class="fas fa-check-circle"></i> Resolved</h3>
+        <p style="font-size: 2em; color: var(--success-color);">{{ stats.resolved_complaints }}</p>
+    </div>
+    
+    <div class="card">
+        <h3><i class="fas fa-users"></i> Total Users</h3>
+        <p style="font-size: 2em; color: var(--secondary-color);">{{ stats.total_users }}</p>
+    </div>
+</div>
+
+<h2><i class="fas fa-road"></i> Road Analysis (Top Problematic Roads)</h2>
+{% if roads %}
+    {% for road in roads %}
+    <div class="card" style="margin-bottom: 10px;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h3>{{ road.road_name }}</h3>
+                <p style="color: var(--gray-color);">
+                    <i class="fas fa-map-marker-alt"></i> {{ road.taluka }} |
+                    Total: {{ road.total_complaints or 0 }} |
+                    Pending: {{ road.pending_complaints or 0 }}
+                </p>
+            </div>
+            <div>
+                <div style="width: 100px; height: 10px; background: #e9ecef; border-radius: 5px; overflow: hidden;">
+                    <div style="width: {{ (road.problem_score or 0) * 10 }}%; height: 100%; background: var(--danger-color);"></div>
+                </div>
+                <p style="text-align: center; margin-top: 5px; font-weight: bold;">
+                    Score: {{ "%.1f"|format(road.problem_score or 0) }}
+                </p>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+{% else %}
+<div class="card">
+    <p>No road analysis data available.</p>
+</div>
+{% endif %}
+
+<h2>Recent Complaints</h2>
+{% if recent_complaints %}
+    {% for complaint in recent_complaints %}
+    <div class="complaint-item">
+        <div style="display: flex; justify-content: space-between;">
+            <div>
+                <h3>{{ complaint.title }}</h3>
+                <p style="color: var(--gray-color);">
+                    <i class="fas fa-user"></i> {{ complaint.author.username }} |
+                    <i class="fas fa-map-marker-alt"></i> {{ complaint.taluka }}
+                </p>
+            </div>
+            <span class="status status-{{ complaint.status }}">
+                {{ complaint.status|replace('_', ' ')|title }}
+            </span>
+        </div>
+        
+        <p>{{ complaint.description[:150] }}...</p>
+        
+        <div style="margin-top: 10px;">
+            {% if complaint.status == 'pending' %}
+            <button onclick="assignComplaint({{ complaint.id }})" class="btn btn-sm">
+                <i class="fas fa-user-tie"></i> Assign Officer
+            </button>
+            {% endif %}
+            
+            {% if complaint.image_path %}
+            <a href="{{ url_for('uploaded_file', filename=complaint.image_path) }}" 
+               target="_blank" class="btn btn-sm" style="background: var(--secondary-color);">
+                <i class="fas fa-eye"></i> View Image
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+{% else %}
+<div class="card">
+    <p>No recent complaints.</p>
+</div>
+{% endif %}
+
+<script>
+function assignComplaint(complaintId) {
+    fetch('/api/officers')
+        .then(response => response.json())
+        .then(officers => {
+            let options = officers.map(o => 
+                `<option value="${o.id}">${o.username} (${o.taluka})</option>`
+            ).join('');
+            
+            const officerId = prompt(`Select officer ID to assign complaint ${complaintId}:
+
+Available officers:
+${officers.map(o => `${o.id}: ${o.username}`).join('\n')}`);
+            
+            if (officerId) {
+                window.location.href = `/complaint/assign/${complaintId}/${officerId}`;
+            }
+        });
+}
+</script>
+{% endblock %}
